@@ -1,0 +1,75 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+dist-ssr/
+**/dist-ssr/
+
+# Local env files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
+!.env*.local.example
+!**/.env*.local.example
+
+# Caches and generated output
+.vite/
+**/.vite/
+.vite-inspect/
+**/.vite-inspect/
+.eslintcache
+**/.eslintcache
+coverage/
+**/coverage/
+*.tsbuildinfo
+
+# Package manager caches
+.pnpm-store/
+.npm/
+.yarn/
+!.yarn/releases/
+!.yarn/plugins/
+!.yarn/sdks/
+!.yarn/versions/
+
+# Deployment output
+.vercel/
+**/.vercel/
+.netlify/
+**/.netlify/
+
+# Local certificates and secrets
+*.pem
+*.key
+*.p12
+*.crt
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
