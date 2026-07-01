@@ -3,6 +3,7 @@ import {
   changeSuggestionStatus,
   deleteSuggestion,
   getSuggestions,
+  updateSuggestionOfficialResponse,
   type GetSuggestionsParams,
 } from '@/features/suggestions/api/suggestionsApi'
 import { unwrapApiResult } from '@/lib/api/result'
@@ -29,8 +30,25 @@ export function useChangeSuggestionStatusMutation() {
       const result = await changeSuggestionStatus(id, status)
       return unwrapApiResult(result)
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, { id }) => {
       await queryClient.invalidateQueries({ queryKey: suggestionsQueryKey })
+      await queryClient.invalidateQueries({ queryKey: ['suggestions', 'detail', id] })
+      await queryClient.invalidateQueries({ queryKey: ['suggestions', id, 'allowed-transitions'] })
+    },
+  })
+}
+
+export function useUpdateSuggestionOfficialResponseMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ id, officialResponse }: { id: string; officialResponse: string }) => {
+      const result = await updateSuggestionOfficialResponse(id, officialResponse)
+      return unwrapApiResult(result)
+    },
+    onSuccess: async (_data, { id }) => {
+      await queryClient.invalidateQueries({ queryKey: suggestionsQueryKey })
+      await queryClient.invalidateQueries({ queryKey: ['suggestions', 'detail', id] })
     },
   })
 }

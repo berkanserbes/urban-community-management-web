@@ -2,8 +2,9 @@ import api from '@/lib/api/axios'
 import type { ApiResult, SuggestionDto, SuggestionStatus } from '@/types/api.types'
 
 export type AllowedSuggestionTransition = {
-  newStatus: SuggestionStatus
-  label: string
+  suggestionId: string
+  currentStatus: SuggestionStatus
+  allowedNextStatuses: SuggestionStatus[]
 }
 
 export type VoteSummary = {
@@ -24,7 +25,7 @@ export async function getSuggestionDetail(id: string) {
 }
 
 export async function getAllowedSuggestionTransitions(id: string) {
-  const response = await api.get<ApiResult<AllowedSuggestionTransition[]>>(
+  const response = await api.get<ApiResult<AllowedSuggestionTransition>>(
     `/api/suggestions/${id}/allowed-status-transitions`,
   )
   return response.data
