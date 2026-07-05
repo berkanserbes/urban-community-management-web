@@ -49,6 +49,7 @@ export function AdminUsersPage() {
     activeCount: users.filter((user) => user.isActive).length,
     adminCount: users.filter((user) => user.role === 'Admin').length,
     officialCount: users.filter((user) => user.role === 'Official').length,
+    citizenCount: users.filter((user) => user.role === 'Citizen').length,
   }
 
   const createOfficial = async (payload: CreateOfficialPayload) => {
@@ -56,9 +57,9 @@ export function AdminUsersPage() {
       const created = await createOfficialMutation.mutateAsync(payload)
       setCreateOpen(false)
       setCredential({ email: created.email, temporaryPassword: created.temporaryPassword })
-      toast.success('Official hesabı oluşturuldu')
+      toast.success('Yetkili hesabı oluşturuldu')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Official oluşturulamadı')
+      toast.error(error instanceof Error ? error.message : 'Yetkili oluşturulamadı')
     }
   }
 
@@ -76,15 +77,16 @@ export function AdminUsersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Kullanıcı Yönetimi"
-        description="Citizen hesaplarını görüntüleyin ve Official hesaplarını güvenli biçimde yönetin."
-        actions={<Button onClick={() => setCreateOpen(true)}>Yeni Official</Button>}
+        description="Vatandaş hesaplarını görüntüleyin ve yetkili hesaplarını güvenli biçimde yönetin."
+        actions={<Button onClick={() => setCreateOpen(true)}>Yeni Yetkili</Button>}
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard label="Toplam" value={String(users.length)} icon={UsersIcon} variant="blue" />
         <StatCard label="Aktif" value={String(stats.activeCount)} icon={ShieldCheck} variant="emerald" />
         <StatCard label="Admin" value={String(stats.adminCount)} icon={UserCog} variant="purple" />
-        <StatCard label="Official" value={String(stats.officialCount)} icon={ShieldOff} variant="amber" />
+        <StatCard label="Yetkili" value={String(stats.officialCount)} icon={ShieldOff} variant="amber" />
+        <StatCard label="Vatandaş" value={String(stats.citizenCount)} icon={UsersIcon} variant="slate" />
       </div>
 
       <Card>
@@ -145,7 +147,7 @@ export function AdminUsersPage() {
             try {
               await accessMutation.mutateAsync(payload)
               setAccessUser(null)
-              toast.success('Official erişimi güncellendi')
+              toast.success('Yetkili erişimi güncellendi')
             } catch (error) {
               toast.error(error instanceof Error ? error.message : 'Erişim güncellenemedi')
             }
@@ -157,7 +159,7 @@ export function AdminUsersPage() {
         if (!open) setCredential(null)
       }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Official Hesabı Oluşturuldu</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Yetkili Hesabı Oluşturuldu</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Bu geçici şifre tekrar gösterilmeyecektir. Güvenli bir kanaldan kullanıcıya iletin.
