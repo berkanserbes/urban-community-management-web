@@ -84,9 +84,9 @@ export function OfficialAnnouncementsPage() {
         content: values.content,
         scope: values.scope,
         expiresAt: values.expiresAt || null,
-        provinceId: values.provinceId || null,
-        districtId: values.districtId || null,
-        neighborhoodId: values.neighborhoodId || null,
+        provinceId: values.scope === 'Province' ? (values.provinceId || null) : null,
+        districtId: values.scope === 'District' ? (values.districtId || null) : null,
+        neighborhoodId: values.scope === 'Neighborhood' ? (values.neighborhoodId || null) : null,
       }
       await createMutation.mutateAsync(payload)
       setCreateDialogOpen(false)

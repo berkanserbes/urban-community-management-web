@@ -93,9 +93,9 @@ export function AdminAnnouncementsPage() {
         title: values.title,
         content: values.content,
         scope: values.scope,
-        provinceId: values.provinceId || null,
-        districtId: values.districtId || null,
-        neighborhoodId: values.neighborhoodId || null,
+        provinceId: values.scope === 'Province' ? (values.provinceId || null) : null,
+        districtId: values.scope === 'District' ? (values.districtId || null) : null,
+        neighborhoodId: values.scope === 'Neighborhood' ? (values.neighborhoodId || null) : null,
         expiresAt: values.expiresAt || null,
       })
       setCreateDialogOpen(false)
