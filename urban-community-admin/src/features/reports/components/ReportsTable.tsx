@@ -64,9 +64,11 @@ const columns = (onAssign?: (report: ReportDto) => void) => [
     cell: ({ row }) => (
       <div className="max-w-[220px] text-sm">
         <p>{row.original.assignedOrganizationName ?? 'Atanmamış'}</p>
-        <p className="text-xs text-muted-foreground">
-          {row.original.assignedDepartmentName ?? '—'}
-        </p>
+        {row.original.assignedOrganizationName ? (
+          <p className="text-xs text-muted-foreground">
+            {row.original.assignedDepartmentName ?? '—'}
+          </p>
+        ) : null}
         {row.original.assignmentNeedsReview ? (
           <Badge variant="destructive" className="mt-1">İnceleme gerekli</Badge>
         ) : null}
