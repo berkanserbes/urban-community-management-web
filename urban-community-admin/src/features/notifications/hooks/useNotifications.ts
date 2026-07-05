@@ -24,7 +24,7 @@ export function useNotificationsQuery(enabled = true) {
 export function useUnreadCountQuery(enabled = true) {
   return useQuery({
     queryKey: [...notificationsKey, 'unread-count'],
-    queryFn: async () => unwrapApiResult(await getUnreadCount()),
+    queryFn: async () => unwrapApiResult(await getUnreadCount()).unreadCount,
     enabled,
     refetchInterval: 15_000,
   })

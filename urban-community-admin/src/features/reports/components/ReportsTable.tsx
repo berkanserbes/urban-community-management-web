@@ -40,6 +40,17 @@ const columns = (onAssign?: (report: ReportDto) => void) => [
     header: 'Oncelik',
     cell: ({ getValue }) => <ReportPriorityBadge priority={getValue()} />,
   }),
+  columnHelper.accessor('similarReportCount', {
+    header: 'Benzer',
+    cell: ({ getValue }) => {
+      const count = getValue() ?? 0
+      return count > 0 ? (
+        <Badge variant="outline">{count} rapor</Badge>
+      ) : (
+        <span className="text-sm text-muted-foreground">-</span>
+      )
+    },
+  }),
   columnHelper.accessor('neighborhoodName', {
     header: 'Mahalle',
     cell: ({ getValue }) => <span className="text-sm">{getValue()}</span>,

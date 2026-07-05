@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Lightbulb, ThumbsUp, Clock, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -24,12 +25,15 @@ import type { SuggestionDto, SuggestionStatus } from '@/types/api.types'
 type StatusFilter = 'all' | SuggestionStatus
 
 export function OfficialSuggestionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const suggestionsQuery = useSuggestionsQuery()
   const changeStatusMutation = useChangeSuggestionStatusMutation()
   const officialResponseMutation = useUpdateSuggestionOfficialResponseMutation()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [evaluatingSuggestion, setEvaluatingSuggestion] = useState<SuggestionDto | null>(null)
-  const [detailSuggestionId, setDetailSuggestionId] = useState<string | null>(null)
+  const [manualDetailSuggestionId, setManualDetailSuggestionId] = useState<string | null>(null)
+  const detailFromUrl = searchParams.get('detail')
+  const detailSuggestionId = detailFromUrl ?? manualDetailSuggestionId
 
   const suggestions = useMemo(() => suggestionsQuery.data ?? [], [suggestionsQuery.data])
 
@@ -79,6 +83,25 @@ export function OfficialSuggestionsPage() {
     }
   }
 
+  const openDetail = (id: string) => {
+    setManualDetailSuggestionId(id)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.set('detail', id)
+      return next
+    })
+  }
+
+  const closeDetail = (open: boolean) => {
+    if (open) return
+    setManualDetailSuggestionId(null)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.delete('detail')
+      return next
+    }, { replace: true })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -120,7 +143,7 @@ export function OfficialSuggestionsPage() {
               canChangeStatus
               canDelete={false}
               onChangeStatus={handleChangeStatus}
-              onDetail={setDetailSuggestionId}
+              onDetail={openDetail}
             />
           )}
         </CardContent>
@@ -128,7 +151,7 @@ export function OfficialSuggestionsPage() {
 
       <SuggestionDetailSheet
         suggestionId={detailSuggestionId}
-        onOpenChange={(open) => { if (!open) setDetailSuggestionId(null) }}
+        onOpenChange={closeDetail}
       />
 
       <SuggestionEvaluationDialog

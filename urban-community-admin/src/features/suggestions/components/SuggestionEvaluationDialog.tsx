@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -28,13 +28,7 @@ export function SuggestionEvaluationDialog({
   onOpenChange,
   onSubmit,
 }: Props) {
-  const [officialResponse, setOfficialResponse] = useState('')
-
-  useEffect(() => {
-    if (open) {
-      setOfficialResponse(initialResponse ?? '')
-    }
-  }, [initialResponse, open])
+  const [officialResponse, setOfficialResponse] = useState(initialResponse ?? '')
 
   const trimmedResponse = officialResponse.trim()
   const canSubmit = trimmedResponse.length >= 10 && !isSaving

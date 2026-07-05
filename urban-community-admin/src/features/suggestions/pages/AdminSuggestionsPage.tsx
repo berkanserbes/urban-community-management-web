@@ -1,16 +1,10 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { Lightbulb, ThumbsUp, Clock, CheckCircle2, Archive } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +29,7 @@ import type { SuggestionDto, SuggestionStatus } from '@/types/api.types'
 type StatusFilter = 'all' | SuggestionStatus
 
 export function AdminSuggestionsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const suggestionsQuery = useSuggestionsQuery()
   const changeStatusMutation = useChangeSuggestionStatusMutation()
   const officialResponseMutation = useUpdateSuggestionOfficialResponseMutation()
@@ -43,7 +38,9 @@ export function AdminSuggestionsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [deletingSuggestion, setDeletingSuggestion] = useState<SuggestionDto | null>(null)
   const [evaluatingSuggestion, setEvaluatingSuggestion] = useState<SuggestionDto | null>(null)
-  const [detailSuggestionId, setDetailSuggestionId] = useState<string | null>(null)
+  const [manualDetailSuggestionId, setManualDetailSuggestionId] = useState<string | null>(null)
+  const detailFromUrl = searchParams.get('detail')
+  const detailSuggestionId = detailFromUrl ?? manualDetailSuggestionId
 
   const suggestions = useMemo(() => suggestionsQuery.data ?? [], [suggestionsQuery.data])
 
@@ -106,6 +103,25 @@ export function AdminSuggestionsPage() {
     }
   }
 
+  const openDetail = (id: string) => {
+    setManualDetailSuggestionId(id)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.set('detail', id)
+      return next
+    })
+  }
+
+  const closeDetail = (open: boolean) => {
+    if (open) return
+    setManualDetailSuggestionId(null)
+    setSearchParams((params) => {
+      const next = new URLSearchParams(params)
+      next.delete('detail')
+      return next
+    }, { replace: true })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -152,7 +168,7 @@ export function AdminSuggestionsPage() {
               canDelete
               onChangeStatus={handleChangeStatus}
               onDelete={setDeletingSuggestion}
-              onDetail={setDetailSuggestionId}
+              onDetail={openDetail}
             />
           )}
         </CardContent>
@@ -183,10 +199,11 @@ export function AdminSuggestionsPage() {
 
       <SuggestionDetailSheet
         suggestionId={detailSuggestionId}
-        onOpenChange={(open) => { if (!open) setDetailSuggestionId(null) }}
+        onOpenChange={closeDetail}
       />
 
       <SuggestionEvaluationDialog
+        key={evaluatingSuggestion?.id ?? 'closed'}
         open={evaluatingSuggestion !== null}
         suggestionTitle={evaluatingSuggestion?.title}
         initialResponse={evaluatingSuggestion?.officialResponse}

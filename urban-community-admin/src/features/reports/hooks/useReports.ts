@@ -36,8 +36,12 @@ export function useAssignReportMutation() {
       reportId: string
       organizationDepartmentId: string | null
     }) => assignReport(reportId, organizationDepartmentId).then(unwrapApiResult),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: reportsKey })
+    onSuccess: async (_data, { reportId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: reportsKey }),
+        queryClient.invalidateQueries({ queryKey: ['reports', 'detail', reportId] }),
+        queryClient.invalidateQueries({ queryKey: ['reports', reportId, 'assignment-options'] }),
+      ])
     },
   })
 }

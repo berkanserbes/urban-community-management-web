@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { toAbsoluteUrl } from '@/lib/utils'
 
 type ProfileImageCardProps = {
   firstName: string
@@ -25,6 +26,7 @@ export function ProfileImageCard({
   const [isDeleting, setIsDeleting] = useState(false)
 
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
+  const profileImageSrc = toAbsoluteUrl(profileImageUrl)
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -66,10 +68,10 @@ export function ProfileImageCard({
       <CardContent className="flex flex-col items-center gap-4 text-center">
         <div className="transition-all duration-500 ease-in-out">
           <Avatar className="size-24">
-            {profileImageUrl ? (
+            {profileImageSrc ? (
               <AvatarImage
-                key={profileImageUrl}
-                src={profileImageUrl}
+                key={profileImageSrc}
+                src={profileImageSrc}
                 alt={`${firstName} ${lastName}`}
                 className="transition-opacity duration-500"
               />

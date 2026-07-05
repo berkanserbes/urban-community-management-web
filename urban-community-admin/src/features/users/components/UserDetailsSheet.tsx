@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { UserRoleBadge, UserStatusBadge } from '@/features/users/components/UserBadges'
 import { UserEditForm, type UserEditFormValues } from '@/features/users/components/UserEditForm'
 import { useAdminUpdateUserMutation } from '@/features/users/hooks/useUsers'
+import { toAbsoluteUrl } from '@/lib/utils'
 import type { UserDto } from '@/types/api.types'
 
 type UserDetailsSheetProps = {
@@ -30,6 +31,7 @@ export function UserDetailsSheet({ user, open, onOpenChange }: UserDetailsSheetP
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : 'UC'
+  const profileImageSrc = toAbsoluteUrl(user?.profileImageUrl)
 
   const handleEdit = async (values: UserEditFormValues) => {
     if (!user) return
@@ -68,8 +70,8 @@ export function UserDetailsSheet({ user, open, onOpenChange }: UserDetailsSheetP
             {/* Avatar + özet */}
             <div className="flex items-center gap-4 px-6 pb-4">
               <Avatar className="size-16">
-                {user.profileImageUrl ? (
-                  <AvatarImage src={user.profileImageUrl} alt={`${user.firstName} ${user.lastName}`} />
+                {profileImageSrc ? (
+                  <AvatarImage src={profileImageSrc} alt={`${user.firstName} ${user.lastName}`} />
                 ) : null}
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>

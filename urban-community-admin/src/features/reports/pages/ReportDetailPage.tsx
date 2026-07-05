@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  ExternalLink,
+  Sparkles,
 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Button } from '@/components/ui/button'
@@ -31,6 +33,7 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { CommentSection } from '@/features/comments/components/CommentSection'
 import type { ReportPriority, ReportStatus } from '@/types/api.types'
+import { ReportPriorityBadge, ReportStatusBadge } from '@/features/reports/components/ReportBadges'
 import {
   useReportDetailQuery,
   useAllowedTransitionsQuery,
@@ -42,6 +45,7 @@ import {
   useCreateReportCommentMutation,
   useDeleteReportCommentMutation,
 } from '@/features/comments/hooks/useComments'
+import { toAbsoluteUrl } from '@/lib/utils'
 
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'] as const
@@ -58,6 +62,7 @@ const mapStatusLabel: Record<string, string> = {
 export function ReportDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
 
@@ -76,6 +81,9 @@ export function ReportDetailPage() {
   const isUpdatingStatus = changeStatusMutation.isPending
   const isUpdatingPriority = changePriorityMutation.isPending
   const isCreating = createCommentMutation.isPending
+  const reportsBasePath = location.pathname.startsWith('/official/')
+    ? '/official/reports'
+    : '/admin/reports'
 
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return
@@ -127,6 +135,15 @@ export function ReportDetailPage() {
   const sortedHistory = report.history ? [...report.history].sort(
     (a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
   ) : []
+  const aiReviewNote = sortedHistory.find(
+    (item) =>
+      item.changedByUserFullName === null &&
+      item.note?.toLowerCase().includes('ai'),
+  )?.note
+  const selectedMediaUrl = toAbsoluteUrl(report.media[selectedMediaIndex]?.url)
+  const aiReviewText = report.status === 'AiReview'
+    ? 'AI incelemesi devam ediyor. Kategori, öncelik ve benzer rapor analizi tamamlanınca burada görünecek.'
+    : aiReviewNote ?? 'AI inceleme notu bulunamadı.'
 
   return (
     <div className="space-y-6">
@@ -156,10 +173,10 @@ export function ReportDetailPage() {
                 <div className="relative">
                   <div
                     className="aspect-video rounded-lg overflow-hidden bg-muted cursor-pointer"
-                    onClick={() => setPreviewImage(report.media[selectedMediaIndex]?.url ?? null)}
+                    onClick={() => setPreviewImage(selectedMediaUrl)}
                   >
                     <img
-                      src={report.media[selectedMediaIndex]?.url ?? '/placeholder-image.svg'}
+                      src={selectedMediaUrl ?? '/placeholder-image.svg'}
                       alt="Rapor medyası"
                       className="size-full object-cover"
                     />
@@ -205,6 +222,53 @@ export function ReportDetailPage() {
               <p className="text-sm whitespace-pre-wrap text-foreground/80">{report.description}</p>
             </CardContent>
           </Card>
+
+          {report.similarReports.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Benzer Raporlar</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {report.similarReports.map((similar) => (
+                  <div
+                    key={similar.reportId}
+                    className="rounded-lg border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <button
+                          type="button"
+                          onClick={() => navigate(`${reportsBasePath}/${similar.reportId}`)}
+                          className="line-clamp-2 text-left text-sm font-medium text-foreground hover:text-primary"
+                        >
+                          {similar.title}
+                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ReportStatusBadge status={similar.status} />
+                          <Badge variant="outline">
+                            %{Math.round(similar.similarityScore * 100)} benzerlik
+                          </Badge>
+                        </div>
+                        <p className="text-xs leading-5 text-muted-foreground">
+                          {similar.reasoning}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`${reportsBasePath}/${similar.reportId}`)}
+                        className="shrink-0"
+                      >
+                        <ExternalLink className="mr-2 size-3.5" />
+                        Aç
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Map */}
           {report.latitude && report.longitude && (
@@ -303,7 +367,38 @@ export function ReportDetailPage() {
             </CardContent>
           </Card>
 
-          {/* AI Priority - coming soon */}
+          {/* AI Review */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="size-4" />
+                AI İncelemesi
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-6 text-muted-foreground">
+                {aiReviewText}
+              </p>
+              <div className="grid gap-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Durum</span>
+                  <ReportStatusBadge status={report.status} />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Öncelik</span>
+                  <ReportPriorityBadge priority={report.priority} />
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Kategori</span>
+                  <span className="text-right font-medium">{report.categoryName}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-muted-foreground">Benzer rapor</span>
+                  <Badge variant="outline">{report.similarReports.length}</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Details */}
           <Card>

@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { toAbsoluteUrl } from '@/lib/utils'
 import type { UserRole } from '@/types/api.types'
 
 type ProfileSummaryCardProps = {
@@ -45,16 +46,17 @@ export function ProfileSummaryCard({
   districtName,
 }: ProfileSummaryCardProps) {
   const initials = `${firstName?.[0] ?? ''}${lastName?.[0] ?? ''}`.toUpperCase()
+  const profileImageSrc = toAbsoluteUrl(profileImageUrl)
 
   return (
     <Card>
       <CardContent className="flex flex-col items-center gap-4 p-6 text-center">
         <div className="transition-all duration-500 ease-in-out">
           <Avatar className="size-20">
-            {profileImageUrl ? (
+            {profileImageSrc ? (
               <AvatarImage
-                key={profileImageUrl}
-                src={profileImageUrl}
+                key={profileImageSrc}
+                src={profileImageSrc}
                 alt={`${firstName} ${lastName}`}
                 className="transition-opacity duration-500"
               />
