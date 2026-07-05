@@ -81,7 +81,7 @@ export function EditOfficialAccessDialog({
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Official Erişimini Düzenle</DialogTitle>
+          <DialogTitle>Yetkili Erişimini Düzenle</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">

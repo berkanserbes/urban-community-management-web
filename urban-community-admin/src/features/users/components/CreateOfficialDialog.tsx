@@ -76,7 +76,7 @@ export function CreateOfficialDialog({ open, isSaving, onOpenChange, onSubmit }:
       onOpenChange(nextOpen)
     }}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Yeni Official</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Yeni Yetkili</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <Input placeholder="Ad" value={identity.firstName} onChange={(event) => setIdentity({ ...identity, firstName: event.target.value })} />
@@ -152,7 +152,7 @@ export function CreateOfficialDialog({ open, isSaving, onOpenChange, onSubmit }:
             officialJurisdictionLevel: level,
             officialJurisdictionId: jurisdictionId,
           })}>
-            {isSaving ? 'Oluşturuluyor...' : 'Official Oluştur'}
+            {isSaving ? 'Oluşturuluyor...' : 'Yetkili Oluştur'}
           </Button>
         </div>
       </DialogContent>
