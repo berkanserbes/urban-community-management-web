@@ -8,6 +8,11 @@ import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { Pencil, Trash2, ToggleLeft, ToggleRight, MoreHorizontal } from 'lucide-react'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -51,9 +56,23 @@ export function AnnouncementTable({
     columnHelper.accessor('title', {
       header: 'Duyuru',
       cell: ({ row }) => (
-        <div className="space-y-1">
-          <p className="font-medium text-foreground">{row.original.title}</p>
-          <p className="line-clamp-2 text-xs text-muted-foreground">{row.original.content}</p>
+        <div className="space-y-1 whitespace-normal min-w-[250px]">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="font-medium text-foreground break-words">{row.original.title}</p>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[400px] break-words">
+              {row.original.title}
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p className="line-clamp-2 text-xs text-muted-foreground break-words">{row.original.content}</p>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-[400px] break-words">
+              {row.original.content}
+            </TooltipContent>
+          </Tooltip>
         </div>
       ),
     }),
