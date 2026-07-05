@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { CommentSection } from '@/features/comments/components/CommentSection'
-import type { ReportPriority, ReportStatus } from '@/types/api.types'
+import type { ReportDto, ReportPriority, ReportStatus } from '@/types/api.types'
 import { ReportPriorityBadge, ReportStatusBadge } from '@/features/reports/components/ReportBadges'
 import {
   useReportDetailQuery,
@@ -46,7 +46,7 @@ import {
   useDeleteReportCommentMutation,
 } from '@/features/comments/hooks/useComments'
 import { toAbsoluteUrl } from '@/lib/utils'
-
+import { ReportAssignmentDialog } from '@/features/reports/components/ReportAssignmentDialog'
 
 const PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'] as const
 
@@ -65,6 +65,7 @@ export function ReportDetailPage() {
   const location = useLocation()
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0)
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false)
 
   const detailQuery = useReportDetailQuery(id ?? null)
   const transitionsQuery = useAllowedTransitionsQuery(id ?? null)
@@ -472,7 +473,12 @@ export function ReportDetailPage() {
                   )}
                 </>
               ) : (
-                <p className="text-muted-foreground">Henüz bir birim atanmamış.</p>
+                <div className="space-y-3">
+                  <p className="text-muted-foreground">Henüz bir birim atanmamış.</p>
+                  <Button variant="outline" size="sm" onClick={() => setAssignmentDialogOpen(true)}>
+                    Birim Ata
+                  </Button>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -535,6 +541,12 @@ export function ReportDetailPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ReportAssignmentDialog
+        key={report?.id ?? 'closed'}
+        report={assignmentDialogOpen ? (report as unknown as ReportDto) : null}
+        onOpenChange={(open) => { if (!open) setAssignmentDialogOpen(false) }}
+      />
     </div>
   )
 }
