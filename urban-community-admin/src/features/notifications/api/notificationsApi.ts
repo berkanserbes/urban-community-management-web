@@ -1,13 +1,13 @@
 import api from '@/lib/api/axios'
-import type { ApiResult, NotificationDto } from '@/types/api.types'
+import type { ApiResult, NotificationDto, PagedResult, PaginationParams } from '@/types/api.types'
 
-type NotificationsResponse = ApiResult<NotificationDto[]>
+type NotificationsResponse = ApiResult<PagedResult<NotificationDto>>
 type UnreadCountResponse = ApiResult<{ unreadCount: number }>
 type IdMessageResponse = ApiResult<{ id: string; message: string }>
 type CountMessageResponse = ApiResult<{ markedCount?: number; deletedCount?: number; message: string }>
 
-export async function getNotifications() {
-  const response = await api.get<NotificationsResponse>('/api/notifications')
+export async function getNotifications(params: PaginationParams) {
+  const response = await api.get<NotificationsResponse>('/api/notifications', { params })
   return response.data
 }
 

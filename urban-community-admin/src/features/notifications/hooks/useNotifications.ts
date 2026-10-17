@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   getNotifications,
   getUnreadCount,
@@ -9,14 +9,16 @@ import {
   deleteAllNotifications,
 } from '@/features/notifications/api/notificationsApi'
 import { unwrapApiResult } from '@/lib/api/result'
+import type { PaginationParams } from '@/types/api.types'
 
 const notificationsKey = ['notifications'] as const
 
-export function useNotificationsQuery(enabled = true) {
+export function useNotificationsQuery(params: PaginationParams, enabled = true) {
   return useQuery({
-    queryKey: notificationsKey,
-    queryFn: async () => unwrapApiResult(await getNotifications()),
+    queryKey: [...notificationsKey, 'list', params],
+    queryFn: async () => unwrapApiResult(await getNotifications(params)),
     enabled,
+    placeholderData: keepPreviousData,
     refetchInterval: 30_000,
   })
 }

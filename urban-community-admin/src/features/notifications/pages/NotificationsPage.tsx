@@ -4,6 +4,7 @@ import { tr } from 'date-fns/locale'
 import { Bell, BellOff, CheckCheck, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { TablePagination } from '@/components/shared/TablePagination'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -19,12 +20,14 @@ import {
 } from '@/components/ui/alert-dialog'
 import {
   useNotificationsQuery,
+  useUnreadCountQuery,
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
   useMarkAsUnreadMutation,
   useDeleteNotificationMutation,
   useDeleteAllNotificationsMutation,
 } from '@/features/notifications/hooks/useNotifications'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
 import type { NotificationDto } from '@/types/api.types'
 
 function NotificationIcon({ type }: { type?: string | null }) {
@@ -45,7 +48,9 @@ type NotificationsPageProps = {
 }
 
 export function NotificationsPage({ navigateToRelated }: NotificationsPageProps) {
-  const notificationsQuery = useNotificationsQuery()
+  const [pageIndex, setPageIndex] = useState(1)
+  const notificationsQuery = useNotificationsQuery({ pageIndex, pageSize: DEFAULT_PAGE_SIZE })
+  const unreadCount = useUnreadCountQuery().data ?? 0
   const markAsReadMutation = useMarkAsReadMutation()
   const markAllAsReadMutation = useMarkAllAsReadMutation()
   const markAsUnreadMutation = useMarkAsUnreadMutation()
@@ -53,8 +58,8 @@ export function NotificationsPage({ navigateToRelated }: NotificationsPageProps)
   const deleteAllMutation = useDeleteAllNotificationsMutation()
   const [deleteAllOpen, setDeleteAllOpen] = useState(false)
 
-  const notifications = notificationsQuery.data ?? []
-  const unreadCount = notifications.filter((n) => !n.isRead).length
+  const notifications = notificationsQuery.data?.items ?? []
+  const totalCount = notificationsQuery.data?.totalCount ?? 0
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -122,7 +127,7 @@ export function NotificationsPage({ navigateToRelated }: NotificationsPageProps)
                 Tümünü Okundu İşaretle
               </Button>
             )}
-            {notifications.length > 0 && (
+            {totalCount > 0 && (
               <Button variant="destructive" size="sm" onClick={() => setDeleteAllOpen(true)}>
                 <Trash2 className="mr-2 size-4" />
                 Tümünü Sil
@@ -211,6 +216,7 @@ export function NotificationsPage({ navigateToRelated }: NotificationsPageProps)
                   </div>
                 </div>
               ))}
+              <TablePagination page={notificationsQuery.data} onPageChange={setPageIndex} itemLabel="bildirim" />
             </div>
           )}
         </CardContent>
