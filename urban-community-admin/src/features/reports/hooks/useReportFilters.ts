@@ -1,47 +1,58 @@
 import { useMemo, useState } from 'react'
-import type { ReportDto, ReportPriority, ReportStatus } from '@/types/api.types'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
+import type { ManageableReportsParams } from '@/features/reports/api/reportsApi'
+import type { ReportPriority, ReportStatus } from '@/types/api.types'
 
-export function useReportFilters(reports: ReportDto[]) {
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<'all' | ReportStatus>('all')
-  const [priority, setPriority] = useState<'all' | ReportPriority>('all')
-  const [assignment, setAssignment] = useState<'all' | 'unassigned' | 'review'>('all')
+type AssignmentFilter = 'all' | 'unassigned' | 'review'
 
-  const filteredReports = useMemo(() => {
-    return reports.filter((report) => {
-      const matchesQuery = [report.title, report.categoryName, report.neighborhoodName]
-        .join(' ')
-        .toLowerCase()
-        .includes(query.toLowerCase())
+/** Holds the report list filters and turns them into server query parameters. */
+export function useReportFilters() {
+  const [query, setQueryState] = useState('')
+  const [status, setStatusState] = useState<'all' | ReportStatus>('all')
+  const [priority, setPriorityState] = useState<'all' | ReportPriority>('all')
+  const [assignment, setAssignmentState] = useState<AssignmentFilter>('all')
+  const [pageIndex, setPageIndex] = useState(1)
+  const search = useDebouncedValue(query.trim())
 
-      const matchesStatus = status === 'all' || report.status === status
-      const matchesPriority = priority === 'all' || report.priority === priority
-      const matchesAssignment =
-        assignment === 'all' ||
-        (assignment === 'unassigned' && !report.assignedOrganizationDepartmentId) ||
-        (assignment === 'review' && report.assignmentNeedsReview)
+  // Any filter change starts again from the first page.
+  const withPageReset = <T,>(setter: (value: T) => void) => (value: T) => {
+    setter(value)
+    setPageIndex(1)
+  }
 
-      return matchesQuery && matchesStatus && matchesPriority && matchesAssignment
-    })
-  }, [assignment, priority, query, reports, status])
+  const params = useMemo<ManageableReportsParams>(
+    () => ({
+      pageIndex,
+      pageSize: DEFAULT_PAGE_SIZE,
+      search: search || undefined,
+      status: status === 'all' ? undefined : status,
+      priority: priority === 'all' ? undefined : priority,
+      assignment:
+        assignment === 'unassigned' ? 'Unassigned' : assignment === 'review' ? 'NeedsReview' : undefined,
+    }),
+    [assignment, pageIndex, priority, search, status],
+  )
 
   const resetFilters = () => {
-    setQuery('')
-    setStatus('all')
-    setPriority('all')
-    setAssignment('all')
+    setQueryState('')
+    setStatusState('all')
+    setPriorityState('all')
+    setAssignmentState('all')
+    setPageIndex(1)
   }
 
   return {
     query,
-    setQuery,
+    setQuery: withPageReset(setQueryState),
     status,
-    setStatus,
+    setStatus: withPageReset(setStatusState),
     priority,
-    setPriority,
+    setPriority: withPageReset(setPriorityState),
     assignment,
-    setAssignment,
-    filteredReports,
+    setAssignment: withPageReset(setAssignmentState),
+    setPageIndex,
+    params,
     resetFilters,
   }
 }

@@ -13,7 +13,10 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSuggestionsQuery } from '@/features/suggestions/hooks/useSuggestions'
-import { useManageableReportsQuery } from '@/features/reports/hooks/useReports'
+import {
+  useManageableReportStatsQuery,
+  useManageableReportsQuery,
+} from '@/features/reports/hooks/useReports'
 import { ReportStatusBadge, ReportPriorityBadge } from '@/features/reports/components/ReportBadges'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,15 +28,17 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function OfficialDashboardPage() {
   const { data: suggestions } = useSuggestionsQuery()
-  const { data: reports } = useManageableReportsQuery()
+  const { data: reportStats } = useManageableReportStatsQuery()
+  // The API already sorts newest first, so the first page is the latest reports.
+  const { data: recentReportsPage } = useManageableReportsQuery({ pageIndex: 1, pageSize: 5 })
 
   const totalSuggestions = suggestions?.length ?? 0
   const reviewingCount = (suggestions ?? []).filter((s) => s.status === 'Reviewing').length
   const implementingCount = (suggestions ?? []).filter((s) => s.status === 'Implementation').length
-  const totalReports = reports?.length ?? 0
-  const pendingReports = (reports ?? []).filter((r) => r.status === 'PendingReview').length
-  const resolvedReports = (reports ?? []).filter((r) => r.status === 'Resolved').length
-  const recentReports = (reports ?? []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
+  const totalReports = reportStats?.total ?? 0
+  const pendingReports = reportStats?.pendingReview ?? 0
+  const resolvedReports = reportStats?.resolved ?? 0
+  const recentReports = recentReportsPage?.items ?? []
 
   const statusChartData = [
     { name: 'Aktif', value: (suggestions ?? []).filter((s) => s.status === 'Active').length },

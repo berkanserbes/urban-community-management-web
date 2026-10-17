@@ -18,7 +18,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCategoriesQuery } from '@/features/categories/hooks/useCategories'
 import { useSuggestionsQuery } from '@/features/suggestions/hooks/useSuggestions'
 import { useUsersQuery } from '@/features/users/hooks/useUsers'
-import { useManageableReportsQuery } from '@/features/reports/hooks/useReports'
+import {
+  useManageableReportStatsQuery,
+  useManageableReportsQuery,
+} from '@/features/reports/hooks/useReports'
 import { ReportStatusBadge, ReportPriorityBadge } from '@/features/reports/components/ReportBadges'
 
 const SUGGESTION_COLORS: Record<string, string> = {
@@ -38,15 +41,17 @@ export function AdminDashboardPage() {
   const { data: categories } = useCategoriesQuery()
   const { data: suggestions } = useSuggestionsQuery()
   const { data: users } = useUsersQuery()
-  const { data: reports } = useManageableReportsQuery()
+  const { data: reportStats } = useManageableReportStatsQuery()
+  // The API already sorts newest first, so the first page is the latest reports.
+  const { data: recentReportsPage } = useManageableReportsQuery({ pageIndex: 1, pageSize: 5 })
 
   const totalSuggestions = suggestions?.length ?? 0
   const totalUsers = users?.length ?? 0
-  const totalReports = reports?.length ?? 0
-  const pendingReports = (reports ?? []).filter((r) => r.status === 'PendingReview').length
-  const inProgressReports = (reports ?? []).filter((r) => r.status === 'InProgress').length
-  const urgentReports = (reports ?? []).filter((r) => r.priority === 'Urgent').length
-  const recentReports = (reports ?? []).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 5)
+  const totalReports = reportStats?.total ?? 0
+  const pendingReports = reportStats?.pendingReview ?? 0
+  const inProgressReports = reportStats?.inProgress ?? 0
+  const urgentReports = reportStats?.urgent ?? 0
+  const recentReports = recentReportsPage?.items ?? []
 
   const categoryChartData = (categories ?? [])
     .filter((c) => c.reportCount > 0)

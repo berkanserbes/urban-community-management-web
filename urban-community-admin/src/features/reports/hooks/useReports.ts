@@ -1,17 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   assignReport,
   getManageableReports,
+  getManageableReportStats,
   getReportAssignmentOptions,
+  type ManageableReportsParams,
 } from '@/features/reports/api/reportsApi'
 import { unwrapApiResult } from '@/lib/api/result'
 
 const reportsKey = ['reports', 'manageable']
 
-export function useManageableReportsQuery() {
+export function useManageableReportsQuery(params: ManageableReportsParams) {
   return useQuery({
-    queryKey: reportsKey,
-    queryFn: async () => unwrapApiResult(await getManageableReports()),
+    queryKey: [...reportsKey, 'list', params],
+    queryFn: async () => unwrapApiResult(await getManageableReports(params)),
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useManageableReportStatsQuery() {
+  return useQuery({
+    queryKey: [...reportsKey, 'stats'],
+    queryFn: async () => unwrapApiResult(await getManageableReportStats()),
   })
 }
 

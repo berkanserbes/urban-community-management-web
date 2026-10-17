@@ -1,5 +1,12 @@
 import api from '@/lib/api/axios'
-import type { ApiResult, ReportDto } from '@/types/api.types'
+import type {
+  ApiResult,
+  PagedResult,
+  PaginationParams,
+  ReportDto,
+  ReportPriority,
+  ReportStatus,
+} from '@/types/api.types'
 
 export type ReportAssignmentOption = {
   organizationDepartmentId: string
@@ -12,8 +19,36 @@ export type ReportAssignmentOption = {
   handlesReportCategory: boolean
 }
 
-export async function getManageableReports() {
-  return (await api.get<ApiResult<ReportDto[]>>('/api/reports/manageable')).data
+export type ReportAssignmentFilter = 'Unassigned' | 'NeedsReview'
+
+export type ManageableReportsParams = PaginationParams & {
+  search?: string
+  status?: ReportStatus
+  priority?: ReportPriority
+  assignment?: ReportAssignmentFilter
+}
+
+export type ManageableReportStats = {
+  total: number
+  pendingReview: number
+  aiReview: number
+  confirmed: number
+  inProgress: number
+  resolved: number
+  rejected: number
+  urgent: number
+  unassigned: number
+  needsReview: number
+}
+
+export async function getManageableReports(params: ManageableReportsParams) {
+  return (
+    await api.get<ApiResult<PagedResult<ReportDto>>>('/api/reports/manageable', { params })
+  ).data
+}
+
+export async function getManageableReportStats() {
+  return (await api.get<ApiResult<ManageableReportStats>>('/api/reports/manageable/stats')).data
 }
 
 export async function getReportAssignmentOptions(reportId: string) {
