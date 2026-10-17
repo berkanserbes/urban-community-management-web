@@ -13,12 +13,6 @@ export type VoteSummary = {
   userVote?: 'Upvote' | 'Downvote' | null
 }
 
-export type VoterDto = {
-  userId: string
-  userFullName: string
-  voteType: 'Upvote' | 'Downvote'
-}
-
 export async function getSuggestionDetail(id: string) {
   const response = await api.get<ApiResult<SuggestionDto>>(`/api/suggestions/${id}`)
   return response.data
@@ -34,13 +28,6 @@ export async function getAllowedSuggestionTransitions(id: string) {
 export async function getVoteSummary(suggestionId: string) {
   const response = await api.get<ApiResult<VoteSummary>>(
     `/api/suggestions/${suggestionId}/votes/summary`,
-  )
-  return response.data
-}
-
-export async function getVoters(suggestionId: string) {
-  const response = await api.get<ApiResult<VoterDto[]>>(
-    `/api/suggestions/${suggestionId}/votes/voters`,
   )
   return response.data
 }
