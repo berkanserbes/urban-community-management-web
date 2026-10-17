@@ -16,7 +16,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCategoriesQuery } from '@/features/categories/hooks/useCategories'
-import { useSuggestionsQuery } from '@/features/suggestions/hooks/useSuggestions'
+import { useSuggestionStatsQuery } from '@/features/suggestions/hooks/useSuggestions'
 import { useUsersQuery } from '@/features/users/hooks/useUsers'
 import {
   useManageableReportStatsQuery,
@@ -39,13 +39,13 @@ const ROLE_COLORS: Record<string, string> = {
 
 export function AdminDashboardPage() {
   const { data: categories } = useCategoriesQuery()
-  const { data: suggestions } = useSuggestionsQuery()
+  const { data: suggestionStats } = useSuggestionStatsQuery()
   const { data: users } = useUsersQuery()
   const { data: reportStats } = useManageableReportStatsQuery()
   // The API already sorts newest first, so the first page is the latest reports.
   const { data: recentReportsPage } = useManageableReportsQuery({ pageIndex: 1, pageSize: 5 })
 
-  const totalSuggestions = suggestions?.length ?? 0
+  const totalSuggestions = suggestionStats?.total ?? 0
   const totalUsers = users?.length ?? 0
   const totalReports = reportStats?.total ?? 0
   const pendingReports = reportStats?.pendingReview ?? 0
@@ -62,19 +62,19 @@ export function AdminDashboardPage() {
   const suggestionStatusData = [
     {
       name: 'Aktif',
-      value: (suggestions ?? []).filter((s) => s.status === 'Active').length,
+      value: suggestionStats?.active ?? 0,
     },
     {
       name: 'İncelemede',
-      value: (suggestions ?? []).filter((s) => s.status === 'Reviewing').length,
+      value: suggestionStats?.reviewing ?? 0,
     },
     {
       name: 'Uygulamada',
-      value: (suggestions ?? []).filter((s) => s.status === 'Implementation').length,
+      value: suggestionStats?.implementation ?? 0,
     },
     {
       name: 'Kapatıldı',
-      value: (suggestions ?? []).filter((s) => s.status === 'Closed').length,
+      value: suggestionStats?.closed ?? 0,
     },
   ].filter((d) => d.value > 0)
 

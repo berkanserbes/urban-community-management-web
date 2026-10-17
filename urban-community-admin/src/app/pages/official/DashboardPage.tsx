@@ -12,7 +12,7 @@ import {
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useSuggestionsQuery } from '@/features/suggestions/hooks/useSuggestions'
+import { useSuggestionStatsQuery } from '@/features/suggestions/hooks/useSuggestions'
 import {
   useManageableReportStatsQuery,
   useManageableReportsQuery,
@@ -27,24 +27,24 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export function OfficialDashboardPage() {
-  const { data: suggestions } = useSuggestionsQuery()
+  const { data: suggestionStats } = useSuggestionStatsQuery()
   const { data: reportStats } = useManageableReportStatsQuery()
   // The API already sorts newest first, so the first page is the latest reports.
   const { data: recentReportsPage } = useManageableReportsQuery({ pageIndex: 1, pageSize: 5 })
 
-  const totalSuggestions = suggestions?.length ?? 0
-  const reviewingCount = (suggestions ?? []).filter((s) => s.status === 'Reviewing').length
-  const implementingCount = (suggestions ?? []).filter((s) => s.status === 'Implementation').length
+  const totalSuggestions = suggestionStats?.total ?? 0
+  const reviewingCount = suggestionStats?.reviewing ?? 0
+  const implementingCount = suggestionStats?.implementation ?? 0
   const totalReports = reportStats?.total ?? 0
   const pendingReports = reportStats?.pendingReview ?? 0
   const resolvedReports = reportStats?.resolved ?? 0
   const recentReports = recentReportsPage?.items ?? []
 
   const statusChartData = [
-    { name: 'Aktif', value: (suggestions ?? []).filter((s) => s.status === 'Active').length },
+    { name: 'Aktif', value: suggestionStats?.active ?? 0 },
     { name: 'İncelemede', value: reviewingCount },
     { name: 'Uygulamada', value: implementingCount },
-    { name: 'Kapatıldı', value: (suggestions ?? []).filter((s) => s.status === 'Closed').length },
+    { name: 'Kapatıldı', value: suggestionStats?.closed ?? 0 },
   ]
 
   return (

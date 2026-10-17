@@ -1,12 +1,26 @@
 import api from '@/lib/api/axios'
-import type { ApiResult, SuggestionDto, SuggestionStatus } from '@/types/api.types'
+import type {
+  ApiResult,
+  PagedResult,
+  PaginationParams,
+  SuggestionDto,
+  SuggestionStatus,
+} from '@/types/api.types'
 
-export type GetSuggestionsParams = {
+export type GetSuggestionsParams = PaginationParams & {
   status?: SuggestionStatus
   userId?: string
 }
 
-type SuggestionsResponse = ApiResult<SuggestionDto[]>
+export type SuggestionStats = {
+  total: number
+  active: number
+  reviewing: number
+  implementation: number
+  closed: number
+}
+
+type SuggestionsResponse = ApiResult<PagedResult<SuggestionDto>>
 type ChangeSuggestionStatusResponse = ApiResult<{ id: string; status: SuggestionStatus }>
 type DeleteSuggestionResponse = ApiResult<{ id: string }>
 type UpdateSuggestionOfficialResponseResponse = ApiResult<{
@@ -16,6 +30,11 @@ type UpdateSuggestionOfficialResponseResponse = ApiResult<{
 
 export async function getSuggestions(params?: GetSuggestionsParams) {
   const response = await api.get<SuggestionsResponse>('/api/suggestions', { params })
+  return response.data
+}
+
+export async function getSuggestionStats() {
+  const response = await api.get<ApiResult<SuggestionStats>>('/api/suggestions/stats')
   return response.data
 }
 

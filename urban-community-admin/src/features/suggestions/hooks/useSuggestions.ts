@@ -1,8 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   changeSuggestionStatus,
   deleteSuggestion,
   getSuggestions,
+  getSuggestionStats,
   updateSuggestionOfficialResponse,
   type GetSuggestionsParams,
 } from '@/features/suggestions/api/suggestionsApi'
@@ -11,14 +12,22 @@ import type { SuggestionStatus } from '@/types/api.types'
 
 const suggestionsQueryKey = ['suggestions'] as const
 
-export function useSuggestionsQuery(params?: GetSuggestionsParams, enabled = true) {
+export function useSuggestionsQuery(params: GetSuggestionsParams, enabled = true) {
   return useQuery({
-    queryKey: [...suggestionsQueryKey, params?.status ?? 'all', params?.userId ?? ''],
+    queryKey: [...suggestionsQueryKey, 'list', params],
     queryFn: async () => {
       const result = await getSuggestions(params)
       return unwrapApiResult(result)
     },
     enabled,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useSuggestionStatsQuery() {
+  return useQuery({
+    queryKey: [...suggestionsQueryKey, 'stats'],
+    queryFn: async () => unwrapApiResult(await getSuggestionStats()),
   })
 }
 

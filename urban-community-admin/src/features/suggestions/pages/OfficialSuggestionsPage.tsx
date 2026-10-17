@@ -4,6 +4,7 @@ import { Lightbulb, ThumbsUp, Clock, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
+import { TablePagination } from '@/components/shared/TablePagination'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -17,37 +18,38 @@ import { SuggestionDetailSheet } from '@/features/suggestions/components/Suggest
 import { SuggestionEvaluationDialog } from '@/features/suggestions/components/SuggestionEvaluationDialog'
 import {
   useSuggestionsQuery,
+  useSuggestionStatsQuery,
   useChangeSuggestionStatusMutation,
   useUpdateSuggestionOfficialResponseMutation,
 } from '@/features/suggestions/hooks/useSuggestions'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
 import type { SuggestionDto, SuggestionStatus } from '@/types/api.types'
 
 type StatusFilter = 'all' | SuggestionStatus
 
 export function OfficialSuggestionsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const suggestionsQuery = useSuggestionsQuery()
+  const [statusFilter, setStatusFilterState] = useState<StatusFilter>('all')
+  const [pageIndex, setPageIndex] = useState(1)
+  const suggestionsQuery = useSuggestionsQuery({
+    pageIndex,
+    pageSize: DEFAULT_PAGE_SIZE,
+    status: statusFilter === 'all' ? undefined : statusFilter,
+  })
   const changeStatusMutation = useChangeSuggestionStatusMutation()
   const officialResponseMutation = useUpdateSuggestionOfficialResponseMutation()
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [evaluatingSuggestion, setEvaluatingSuggestion] = useState<SuggestionDto | null>(null)
   const [manualDetailSuggestionId, setManualDetailSuggestionId] = useState<string | null>(null)
   const detailFromUrl = searchParams.get('detail')
   const detailSuggestionId = detailFromUrl ?? manualDetailSuggestionId
 
-  const suggestions = useMemo(() => suggestionsQuery.data ?? [], [suggestionsQuery.data])
+  const suggestions = useMemo(() => suggestionsQuery.data?.items ?? [], [suggestionsQuery.data])
+  const stats = useSuggestionStatsQuery().data
 
-  const filtered = useMemo(() => {
-    if (statusFilter === 'all') return suggestions
-    return suggestions.filter((s) => s.status === statusFilter)
-  }, [suggestions, statusFilter])
-
-  const stats = useMemo(() => ({
-    total: suggestions.length,
-    active: suggestions.filter((s) => s.status === 'Active').length,
-    reviewing: suggestions.filter((s) => s.status === 'Reviewing').length,
-    implementation: suggestions.filter((s) => s.status === 'Implementation').length,
-  }), [suggestions])
+  const setStatusFilter = (status: StatusFilter) => {
+    setStatusFilterState(status)
+    setPageIndex(1)
+  }
 
   const handleChangeStatus = async (id: string, status: SuggestionStatus) => {
     if (status === 'Closed') {
@@ -110,10 +112,10 @@ export function OfficialSuggestionsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Toplam" value={String(stats.total)} icon={Lightbulb} variant="blue" />
-        <StatCard label="Aktif" value={String(stats.active)} icon={ThumbsUp} variant="emerald" />
-        <StatCard label="İncelemede" value={String(stats.reviewing)} icon={Clock} variant="amber" />
-        <StatCard label="Uygulamada" value={String(stats.implementation)} icon={CheckCircle2} variant="purple" />
+        <StatCard label="Toplam" value={String(stats?.total ?? 0)} icon={Lightbulb} variant="blue" />
+        <StatCard label="Aktif" value={String(stats?.active ?? 0)} icon={ThumbsUp} variant="emerald" />
+        <StatCard label="İncelemede" value={String(stats?.reviewing ?? 0)} icon={Clock} variant="amber" />
+        <StatCard label="Uygulamada" value={String(stats?.implementation ?? 0)} icon={CheckCircle2} variant="purple" />
       </div>
 
       <Card>
@@ -138,13 +140,16 @@ export function OfficialSuggestionsPage() {
           ) : suggestionsQuery.isError ? (
             <div className="py-12 text-center text-sm text-destructive">Öneriler yüklenemedi.</div>
           ) : (
-            <SuggestionsTable
-              suggestions={filtered}
-              canChangeStatus
-              canDelete={false}
-              onChangeStatus={handleChangeStatus}
-              onDetail={openDetail}
-            />
+            <>
+              <SuggestionsTable
+                suggestions={suggestions}
+                canChangeStatus
+                canDelete={false}
+                onChangeStatus={handleChangeStatus}
+                onDetail={openDetail}
+              />
+              <TablePagination page={suggestionsQuery.data} onPageChange={setPageIndex} itemLabel="öneri" />
+            </>
           )}
         </CardContent>
       </Card>
