@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ShieldCheck, ShieldOff, UserCog, Users as UsersIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
+import { TablePagination } from '@/components/shared/TablePagination'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -18,38 +19,41 @@ import {
   useCreateOfficialMutation,
   useDeactivateUserMutation,
   useUserQuery,
+  useUserStatsQuery,
   useUsersQuery,
 } from '@/features/users/hooks/useUsers'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
 import type { UserDto, UserRole } from '@/types/api.types'
 
 export function AdminUsersPage() {
-  const usersQuery = useUsersQuery()
+  const [query, setQuery] = useState('')
+  const [role, setRole] = useState<'all' | UserRole>('all')
+  const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
+  const [pageIndex, setPageIndex] = useState(1)
+  const search = useDebouncedValue(query.trim())
+  const usersQuery = useUsersQuery({
+    pageIndex,
+    pageSize: DEFAULT_PAGE_SIZE,
+    search: search || undefined,
+    role: role === 'all' ? undefined : role,
+    isActive: status === 'all' ? undefined : status === 'active',
+  })
+  const stats = useUserStatsQuery().data
   const createOfficialMutation = useCreateOfficialMutation()
   const deactivateMutation = useDeactivateUserMutation()
   const activateMutation = useActivateUserMutation()
   const accessMutation = useAssignUserRoleMutation()
-  const [query, setQuery] = useState('')
-  const [role, setRole] = useState<'all' | UserRole>('all')
-  const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [credential, setCredential] = useState<{ email: string; temporaryPassword: string } | null>(null)
   const [accessUser, setAccessUser] = useState<UserDto | null>(null)
   const selectedUserQuery = useUserQuery(selectedUserId, Boolean(selectedUserId))
 
-  const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data])
-  const filteredUsers = useMemo(() => users.filter((user) => {
-    const matchesQuery = [user.firstName, user.lastName, user.email].join(' ').toLowerCase().includes(query.toLowerCase())
-    const matchesRole = role === 'all' || user.role === role
-    const matchesStatus = status === 'all' || (status === 'active' ? user.isActive : !user.isActive)
-    return matchesQuery && matchesRole && matchesStatus
-  }), [query, role, status, users])
-
-  const stats = {
-    activeCount: users.filter((user) => user.isActive).length,
-    adminCount: users.filter((user) => user.role === 'Admin').length,
-    officialCount: users.filter((user) => user.role === 'Official').length,
-    citizenCount: users.filter((user) => user.role === 'Citizen').length,
+  // Any filter change starts again from the first page.
+  const withPageReset = <T,>(setter: (value: T) => void) => (value: T) => {
+    setter(value)
+    setPageIndex(1)
   }
 
   const createOfficial = async (payload: CreateOfficialPayload) => {
@@ -82,11 +86,11 @@ export function AdminUsersPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="Toplam" value={String(users.length)} icon={UsersIcon} variant="blue" />
-        <StatCard label="Aktif" value={String(stats.activeCount)} icon={ShieldCheck} variant="emerald" />
-        <StatCard label="Admin" value={String(stats.adminCount)} icon={UserCog} variant="purple" />
-        <StatCard label="Yetkili" value={String(stats.officialCount)} icon={ShieldOff} variant="amber" />
-        <StatCard label="Vatandaş" value={String(stats.citizenCount)} icon={UsersIcon} variant="slate" />
+        <StatCard label="Toplam" value={String(stats?.total ?? 0)} icon={UsersIcon} variant="blue" />
+        <StatCard label="Aktif" value={String(stats?.active ?? 0)} icon={ShieldCheck} variant="emerald" />
+        <StatCard label="Admin" value={String(stats?.admin ?? 0)} icon={UserCog} variant="purple" />
+        <StatCard label="Yetkili" value={String(stats?.official ?? 0)} icon={ShieldOff} variant="amber" />
+        <StatCard label="Vatandaş" value={String(stats?.citizen ?? 0)} icon={UsersIcon} variant="slate" />
       </div>
 
       <Card>
@@ -94,15 +98,16 @@ export function AdminUsersPage() {
           <CardTitle>Kullanıcı Listesi</CardTitle>
           <UsersFilters
             query={query}
-            onQueryChange={setQuery}
+            onQueryChange={withPageReset(setQuery)}
             role={role}
-            onRoleChange={setRole}
+            onRoleChange={withPageReset(setRole)}
             status={status}
-            onStatusChange={setStatus}
+            onStatusChange={withPageReset(setStatus)}
             onReset={() => {
               setQuery('')
               setRole('all')
               setStatus('all')
+              setPageIndex(1)
             }}
           />
         </CardHeader>
@@ -112,12 +117,15 @@ export function AdminUsersPage() {
           ) : usersQuery.isError ? (
             <div className="py-12 text-center text-sm text-destructive">Kullanıcılar yüklenemedi.</div>
           ) : (
-            <UsersTable
-              users={filteredUsers}
-              onView={setSelectedUserId}
-              onToggleStatus={toggleStatus}
-              onEditAccess={setAccessUser}
-            />
+            <>
+              <UsersTable
+                users={usersQuery.data?.items ?? []}
+                onView={setSelectedUserId}
+                onToggleStatus={toggleStatus}
+                onEditAccess={setAccessUser}
+              />
+              <TablePagination page={usersQuery.data} onPageChange={setPageIndex} itemLabel="kullanıcı" />
+            </>
           )}
         </CardContent>
       </Card>

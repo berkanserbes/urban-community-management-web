@@ -17,7 +17,7 @@ import { StatCard } from '@/components/shared/StatCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCategoriesQuery } from '@/features/categories/hooks/useCategories'
 import { useSuggestionStatsQuery } from '@/features/suggestions/hooks/useSuggestions'
-import { useUsersQuery } from '@/features/users/hooks/useUsers'
+import { useUserStatsQuery } from '@/features/users/hooks/useUsers'
 import {
   useManageableReportStatsQuery,
   useManageableReportsQuery,
@@ -40,13 +40,13 @@ const ROLE_COLORS: Record<string, string> = {
 export function AdminDashboardPage() {
   const { data: categories } = useCategoriesQuery()
   const { data: suggestionStats } = useSuggestionStatsQuery()
-  const { data: users } = useUsersQuery()
+  const { data: userStats } = useUserStatsQuery()
   const { data: reportStats } = useManageableReportStatsQuery()
   // The API already sorts newest first, so the first page is the latest reports.
   const { data: recentReportsPage } = useManageableReportsQuery({ pageIndex: 1, pageSize: 5 })
 
   const totalSuggestions = suggestionStats?.total ?? 0
-  const totalUsers = users?.length ?? 0
+  const totalUsers = userStats?.total ?? 0
   const totalReports = reportStats?.total ?? 0
   const pendingReports = reportStats?.pendingReview ?? 0
   const inProgressReports = reportStats?.inProgress ?? 0
@@ -81,15 +81,15 @@ export function AdminDashboardPage() {
   const userRoleData = [
     {
       name: 'Admin',
-      value: (users ?? []).filter((u) => u.role === 'Admin').length,
+      value: userStats?.admin ?? 0,
     },
     {
       name: 'Yetkili',
-      value: (users ?? []).filter((u) => u.role === 'Official').length,
+      value: userStats?.official ?? 0,
     },
     {
       name: 'Vatandaş',
-      value: (users ?? []).filter((u) => u.role === 'Citizen').length,
+      value: userStats?.citizen ?? 0,
     },
   ].filter((d) => d.value > 0)
 

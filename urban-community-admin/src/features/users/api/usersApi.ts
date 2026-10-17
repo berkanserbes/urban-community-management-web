@@ -1,7 +1,22 @@
 import api from '@/lib/api/axios'
-import type { ApiResult, UserDto } from '@/types/api.types'
+import type { ApiResult, PagedResult, PaginationParams, UserDto, UserRole } from '@/types/api.types'
 
-export type GetUsersResponse = ApiResult<UserDto[]>
+export type GetUsersParams = PaginationParams & {
+  search?: string
+  role?: UserRole
+  isActive?: boolean
+}
+
+export type UserStats = {
+  total: number
+  active: number
+  inactive: number
+  admin: number
+  official: number
+  citizen: number
+}
+
+export type GetUsersResponse = ApiResult<PagedResult<UserDto>>
 
 export type GetUserByIdResponse = ApiResult<UserDto>
 
@@ -28,8 +43,13 @@ export type ToggleUserResponse = ApiResult<{
   message: string
 }>
 
-export async function getUsers() {
-  const response = await api.get<GetUsersResponse>('/api/users')
+export async function getUsers(params: GetUsersParams) {
+  const response = await api.get<GetUsersResponse>('/api/users', { params })
+  return response.data
+}
+
+export async function getUserStats() {
+  const response = await api.get<ApiResult<UserStats>>('/api/users/stats')
   return response.data
 }
 

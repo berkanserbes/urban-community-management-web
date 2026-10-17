@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   activateUser,
   adminUpdateUser,
@@ -7,23 +7,34 @@ import {
   deactivateUser,
   getUserById,
   getUsers,
+  getUserStats,
   type AdminUpdateUserPayload,
   type AssignRolePayload,
   type CreateOfficialPayload,
+  type GetUsersParams,
 } from '@/features/users/api/usersApi'
 import { unwrapApiResult } from '@/lib/api/result'
-import type { UserDto } from '@/types/api.types'
+import type { PagedResult, UserDto } from '@/types/api.types'
 
 const usersQueryKey = ['users']
 const userQueryKey = (id: string) => ['users', id]
 
-export function useUsersQuery(enabled: boolean = true) {
+export function useUsersQuery(params: GetUsersParams, enabled: boolean = true) {
   return useQuery({
-    queryKey: usersQueryKey,
-    queryFn: async (): Promise<UserDto[]> => {
-      const result = await getUsers()
+    queryKey: [...usersQueryKey, 'list', params],
+    queryFn: async (): Promise<PagedResult<UserDto>> => {
+      const result = await getUsers(params)
       return unwrapApiResult(result)
     },
+    enabled,
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useUserStatsQuery(enabled: boolean = true) {
+  return useQuery({
+    queryKey: [...usersQueryKey, 'stats'],
+    queryFn: async () => unwrapApiResult(await getUserStats()),
     enabled,
   })
 }
