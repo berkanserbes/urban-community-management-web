@@ -63,15 +63,6 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Skip retry for profile endpoint if user data is already available in store
-    if (originalRequest.url?.includes('/api/users/me') && useAuthStore.getState().user) {
-      const data = error.response?.data
-      if (data?.errors?.length) {
-        return Promise.reject(new Error(data.errors[0]))
-      }
-      return Promise.reject(error)
-    }
-
     // If already refreshing, queue this request
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
