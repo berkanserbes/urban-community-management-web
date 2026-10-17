@@ -8,6 +8,10 @@ updates:
       cronjob: "0 9 1 */2 *" # 09:00 on the 1st of every second month
       timezone: Europe/Istanbul
     open-pull-requests-limit: 5
+    ignore:
+      # v9 replaces useReactTable with a new table API; every table component needs migrating.
+      - dependency-name: "@tanstack/react-table"
+        update-types: ["version-update:semver-major"]
     groups:
       npm-minor-and-patch:
         update-types: [minor, patch]
