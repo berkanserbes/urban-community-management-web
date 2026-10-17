@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Megaphone, BadgeInfo, ToggleLeft, Clock3, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
+import { TablePagination } from '@/components/shared/TablePagination'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -18,6 +19,7 @@ import { AnnouncementDialog, type AnnouncementEditData, type AnnouncementFormVal
 import { AnnouncementFilters } from '@/features/announcements/components/AnnouncementFilters'
 import { AnnouncementTable } from '@/features/announcements/components/AnnouncementTable'
 import {
+  useManageableAnnouncementStatsQuery,
   useManageableAnnouncementsQuery,
   useCreateAnnouncementMutation,
   useUpdateAnnouncementMutation,
@@ -28,22 +30,12 @@ import {
 import type { AnnouncementDto as AnnouncementType } from '@/types/api.types'
 import { useAnnouncementFilters } from '@/features/announcements/hooks/useAnnouncementFilters'
 
-function isExpiringSoon(announcement: AnnouncementType): boolean {
-  if (!announcement.expiresAt) return false
-  const expiresAt = new Date(announcement.expiresAt).getTime()
-  const fiveDays = 1000 * 60 * 60 * 24 * 5
-  return expiresAt - fiveDays <= Date.now()
-}
-
 export function AdminAnnouncementsPage() {
-  const announcementsQuery = useManageableAnnouncementsQuery()
   const createMutation = useCreateAnnouncementMutation()
   const updateMutation = useUpdateAnnouncementMutation()
   const activateMutation = useActivateAnnouncementMutation()
   const deactivateMutation = useDeactivateAnnouncementMutation()
   const deleteMutation = useDeleteAnnouncementMutation()
-
-  const announcements = useMemo(() => announcementsQuery.data ?? [], [announcementsQuery.data])
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -57,15 +49,14 @@ export function AdminAnnouncementsPage() {
     setScope,
     activeOnly,
     setActiveOnly,
-    filteredAnnouncements,
+    setPageIndex,
+    params,
     resetFilters,
-  } = useAnnouncementFilters(announcements)
+  } = useAnnouncementFilters()
+  const announcementsQuery = useManageableAnnouncementsQuery(params)
+  const stats = useManageableAnnouncementStatsQuery().data
 
   const isSaving = createMutation.isPending || updateMutation.isPending
-
-  const activeCount = announcements.filter((a) => a.isActive).length
-  const allScopeCount = announcements.filter((a) => a.scope === 'All').length
-  const expiringSoonCount = announcements.filter(isExpiringSoon).length
 
   const handleOpenCreate = () => {
     setEditingAnnouncement(null)
@@ -160,10 +151,10 @@ export function AdminAnnouncementsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Toplam" value={String(announcements.length)} icon={Megaphone} variant="blue" />
-        <StatCard label="Aktif" value={String(activeCount)} icon={ToggleLeft} variant="emerald" />
-        <StatCard label="Tümü" value={String(allScopeCount)} icon={BadgeInfo} variant="purple" />
-        <StatCard label="Yakın Süreli" value={String(expiringSoonCount)} icon={Clock3} variant="amber" />
+        <StatCard label="Toplam" value={String(stats?.total ?? 0)} icon={Megaphone} variant="blue" />
+        <StatCard label="Aktif" value={String(stats?.active ?? 0)} icon={ToggleLeft} variant="emerald" />
+        <StatCard label="Tümü" value={String(stats?.allScope ?? 0)} icon={BadgeInfo} variant="purple" />
+        <StatCard label="Yakın Süreli" value={String(stats?.expiringSoon ?? 0)} icon={Clock3} variant="amber" />
       </div>
 
       <Card>
@@ -189,15 +180,18 @@ export function AdminAnnouncementsPage() {
               Duyurular yüklenemedi.
             </div>
           ) : (
-            <AnnouncementTable
-              announcements={filteredAnnouncements}
-              showActions
-              canDelete
-              onEdit={handleOpenEdit}
-              onDelete={(a) => setDeletingAnnouncement(a)}
-              onActivate={handleActivate}
-              onDeactivate={handleDeactivate}
-            />
+            <>
+              <AnnouncementTable
+                announcements={announcementsQuery.data?.items ?? []}
+                showActions
+                canDelete
+                onEdit={handleOpenEdit}
+                onDelete={(a) => setDeletingAnnouncement(a)}
+                onActivate={handleActivate}
+                onDeactivate={handleDeactivate}
+              />
+              <TablePagination page={announcementsQuery.data} onPageChange={setPageIndex} itemLabel="duyuru" />
+            </>
           )}
         </CardContent>
       </Card>

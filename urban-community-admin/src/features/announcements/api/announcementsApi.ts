@@ -1,5 +1,24 @@
 import api from '@/lib/api/axios'
-import type { AnnouncementDto, AnnouncementScope, ApiResult } from '@/types/api.types'
+import type {
+  AnnouncementDto,
+  AnnouncementScope,
+  ApiResult,
+  PagedResult,
+  PaginationParams,
+} from '@/types/api.types'
+
+export type ManageableAnnouncementsParams = PaginationParams & {
+  search?: string
+  scope?: AnnouncementScope
+  isActive?: boolean
+}
+
+export type ManageableAnnouncementStats = {
+  total: number
+  active: number
+  allScope: number
+  expiringSoon: number
+}
 
 export type CreateAnnouncementPayload = {
   title: string
@@ -18,7 +37,7 @@ export type UpdateAnnouncementPayload = {
   expiresAt?: string | null
 }
 
-type AnnouncementsResponse = ApiResult<AnnouncementDto[]>
+type AnnouncementsResponse = ApiResult<PagedResult<AnnouncementDto>>
 type MutationResponse = ApiResult<{
   id: string
   title: string
@@ -32,8 +51,15 @@ type MutationResponse = ApiResult<{
 }>
 type IdMessageResponse = ApiResult<{ id: string; message: string }>
 
-export async function getManageableAnnouncements() {
-  const response = await api.get<AnnouncementsResponse>('/api/announcements/manageable')
+export async function getManageableAnnouncements(params: ManageableAnnouncementsParams) {
+  const response = await api.get<AnnouncementsResponse>('/api/announcements/manageable', { params })
+  return response.data
+}
+
+export async function getManageableAnnouncementStats() {
+  const response = await api.get<ApiResult<ManageableAnnouncementStats>>(
+    '/api/announcements/manageable/stats',
+  )
   return response.data
 }
 

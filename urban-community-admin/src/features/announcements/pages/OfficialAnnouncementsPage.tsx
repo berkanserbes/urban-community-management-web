@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Megaphone, ToggleLeft, ToggleRight, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatCard } from '@/components/shared/StatCard'
+import { TablePagination } from '@/components/shared/TablePagination'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AnnouncementDialog, type AnnouncementEditData, type AnnouncementFormValues } from '@/features/announcements/components/AnnouncementDialog'
@@ -9,6 +10,7 @@ import { AnnouncementFilters } from '@/features/announcements/components/Announc
 import { AnnouncementTable } from '@/features/announcements/components/AnnouncementTable'
 import type { CreateAnnouncementPayload } from '@/features/announcements/api/announcementsApi'
 import {
+  useManageableAnnouncementStatsQuery,
   useManageableAnnouncementsQuery,
   useCreateAnnouncementMutation,
   useUpdateAnnouncementMutation,
@@ -24,13 +26,10 @@ export function OfficialAnnouncementsPage() {
   const user = useAuthStore((state) => state.user)
   const currentUserQuery = useCurrentUserQuery(Boolean(user))
   const currentUser = currentUserQuery.data ?? user
-  const announcementsQuery = useManageableAnnouncementsQuery()
   const createMutation = useCreateAnnouncementMutation()
   const updateMutation = useUpdateAnnouncementMutation()
   const activateMutation = useActivateAnnouncementMutation()
   const deactivateMutation = useDeactivateAnnouncementMutation()
-
-  const announcements = useMemo(() => announcementsQuery.data ?? [], [announcementsQuery.data])
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -43,17 +42,14 @@ export function OfficialAnnouncementsPage() {
     setScope,
     activeOnly,
     setActiveOnly,
-    filteredAnnouncements,
+    setPageIndex,
+    params,
     resetFilters,
-  } = useAnnouncementFilters(announcements)
+  } = useAnnouncementFilters()
+  const announcementsQuery = useManageableAnnouncementsQuery(params)
+  const stats = useManageableAnnouncementStatsQuery().data
 
   const isSaving = createMutation.isPending || updateMutation.isPending
-
-  const stats = useMemo(() => {
-    const activeCount = announcements.filter((a) => a.isActive).length
-    const inactiveCount = announcements.length - activeCount
-    return { activeCount, inactiveCount }
-  }, [announcements])
 
   const defaultScope = (currentUser?.officialJurisdictionLevel ?? 'Neighborhood') as 'Province' | 'District' | 'Neighborhood'
 
@@ -146,9 +142,9 @@ export function OfficialAnnouncementsPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Toplam" value={String(announcements.length)} icon={Megaphone} variant="blue" />
-        <StatCard label="Aktif" value={String(stats.activeCount)} icon={ToggleRight} variant="emerald" />
-        <StatCard label="Pasif" value={String(stats.inactiveCount)} icon={ToggleLeft} variant="slate" />
+        <StatCard label="Toplam" value={String(stats?.total ?? 0)} icon={Megaphone} variant="blue" />
+        <StatCard label="Aktif" value={String(stats?.active ?? 0)} icon={ToggleRight} variant="emerald" />
+        <StatCard label="Pasif" value={String((stats?.total ?? 0) - (stats?.active ?? 0))} icon={ToggleLeft} variant="slate" />
       </div>
 
       <Card>
@@ -174,13 +170,16 @@ export function OfficialAnnouncementsPage() {
               Duyurular yüklenemedi.
             </div>
           ) : (
-            <AnnouncementTable
-              announcements={filteredAnnouncements}
-              showActions
-              onEdit={handleOpenEdit}
-              onActivate={handleActivate}
-              onDeactivate={handleDeactivate}
-            />
+            <>
+              <AnnouncementTable
+                announcements={announcementsQuery.data?.items ?? []}
+                showActions
+                onEdit={handleOpenEdit}
+                onActivate={handleActivate}
+                onDeactivate={handleDeactivate}
+              />
+              <TablePagination page={announcementsQuery.data} onPageChange={setPageIndex} itemLabel="duyuru" />
+            </>
           )}
         </CardContent>
       </Card>

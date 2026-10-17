@@ -1,41 +1,50 @@
 import { useMemo, useState } from 'react'
-import type { AnnouncementDto, AnnouncementScope } from '@/types/api.types'
+import { useDebouncedValue } from '@/hooks/use-debounced-value'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
+import type { ManageableAnnouncementsParams } from '@/features/announcements/api/announcementsApi'
+import type { AnnouncementScope } from '@/types/api.types'
 
-export function useAnnouncementFilters(announcements: AnnouncementDto[]) {
-  const [query, setQuery] = useState('')
-  const [scope, setScope] = useState<'all' | AnnouncementScope>('all')
-  const [activeOnly, setActiveOnly] = useState<'all' | 'active' | 'inactive'>('all')
+/** Holds the announcement list filters and turns them into server query parameters. */
+export function useAnnouncementFilters() {
+  const [query, setQueryState] = useState('')
+  const [scope, setScopeState] = useState<'all' | AnnouncementScope>('all')
+  const [activeOnly, setActiveOnlyState] = useState<'all' | 'active' | 'inactive'>('all')
+  const [pageIndex, setPageIndex] = useState(1)
+  const search = useDebouncedValue(query.trim())
 
-  const filteredAnnouncements = useMemo(() => {
-    return announcements.filter((announcement) => {
-      const matchesQuery = [announcement.title, announcement.content]
-        .join(' ')
-        .toLowerCase()
-        .includes(query.toLowerCase())
-      const matchesScope = scope === 'all' || announcement.scope === scope
-      const matchesActive =
-        activeOnly === 'all' ||
-        (activeOnly === 'active' && announcement.isActive) ||
-        (activeOnly === 'inactive' && !announcement.isActive)
+  // Any filter change starts again from the first page.
+  const withPageReset = <T,>(setter: (value: T) => void) => (value: T) => {
+    setter(value)
+    setPageIndex(1)
+  }
 
-      return matchesQuery && matchesScope && matchesActive
-    })
-  }, [activeOnly, announcements, query, scope])
+  const params = useMemo<ManageableAnnouncementsParams>(
+    () => ({
+      pageIndex,
+      pageSize: DEFAULT_PAGE_SIZE,
+      search: search || undefined,
+      scope: scope === 'all' ? undefined : scope,
+      isActive: activeOnly === 'all' ? undefined : activeOnly === 'active',
+    }),
+    [activeOnly, pageIndex, scope, search],
+  )
 
   const resetFilters = () => {
-    setQuery('')
-    setScope('all')
-    setActiveOnly('all')
+    setQueryState('')
+    setScopeState('all')
+    setActiveOnlyState('all')
+    setPageIndex(1)
   }
 
   return {
     query,
-    setQuery,
+    setQuery: withPageReset(setQueryState),
     scope,
-    setScope,
+    setScope: withPageReset(setScopeState),
     activeOnly,
-    setActiveOnly,
-    filteredAnnouncements,
+    setActiveOnly: withPageReset(setActiveOnlyState),
+    setPageIndex,
+    params,
     resetFilters,
   }
 }

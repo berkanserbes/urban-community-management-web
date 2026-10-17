@@ -1,26 +1,36 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   getManageableAnnouncements,
+  getManageableAnnouncementStats,
   createAnnouncement,
   updateAnnouncement,
   activateAnnouncement,
   deactivateAnnouncement,
   deleteAnnouncement,
   type CreateAnnouncementPayload,
+  type ManageableAnnouncementsParams,
   type UpdateAnnouncementPayload,
 } from '@/features/announcements/api/announcementsApi'
 import { unwrapApiResult } from '@/lib/api/result'
 
 const announcementsQueryKey = ['announcements', 'manageable'] as const
 
-export function useManageableAnnouncementsQuery() {
+export function useManageableAnnouncementsQuery(params: ManageableAnnouncementsParams) {
   return useQuery({
-    queryKey: announcementsQueryKey,
+    queryKey: [...announcementsQueryKey, 'list', params],
     queryFn: async () => {
-      const result = await getManageableAnnouncements()
+      const result = await getManageableAnnouncements(params)
       return unwrapApiResult(result)
     },
+    placeholderData: keepPreviousData,
+  })
+}
+
+export function useManageableAnnouncementStatsQuery() {
+  return useQuery({
+    queryKey: [...announcementsQueryKey, 'stats'],
+    queryFn: async () => unwrapApiResult(await getManageableAnnouncementStats()),
   })
 }
 
