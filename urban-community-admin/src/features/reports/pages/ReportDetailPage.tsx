@@ -77,7 +77,9 @@ export function ReportDetailPage() {
 
   const report = detailQuery.data
   const transitions = transitionsQuery.data ?? []
-  const comments = commentsQuery.data ?? []
+  const comments = commentsQuery.data?.pages.flatMap((page) => page.items) ?? []
+  const commentPages = commentsQuery.data?.pages ?? []
+  const commentCount = commentPages[commentPages.length - 1]?.totalCount ?? 0
 
   const isUpdatingStatus = changeStatusMutation.isPending
   const isUpdatingPriority = changePriorityMutation.isPending
@@ -304,6 +306,10 @@ export function ReportDetailPage() {
             <CardContent className="pt-6">
               <CommentSection
                 comments={comments}
+                totalCount={commentCount}
+                hasMore={commentsQuery.hasNextPage}
+                isLoadingMore={commentsQuery.isFetchingNextPage}
+                onLoadMore={() => commentsQuery.fetchNextPage()}
                 isLoading={commentsQuery.isLoading}
                 isError={commentsQuery.isError}
                 onCreateComment={handleCreateComment}

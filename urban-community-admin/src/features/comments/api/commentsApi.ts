@@ -1,5 +1,5 @@
 import api from '@/lib/api/axios'
-import type { ApiResult } from '@/types/api.types'
+import type { ApiResult, PagedResult, PaginationParams } from '@/types/api.types'
 
 export interface CommentDto {
   id: string
@@ -10,11 +10,11 @@ export interface CommentDto {
   updatedAt?: string | null
 }
 
-type CommentsResponse = ApiResult<CommentDto[]>
+type CommentsResponse = ApiResult<PagedResult<CommentDto>>
 type CommentResponse = ApiResult<CommentDto>
 
-export async function getReportComments(reportId: string) {
-  const response = await api.get<CommentsResponse>(`/api/reports/${reportId}/comments`)
+export async function getReportComments(reportId: string, params: PaginationParams) {
+  const response = await api.get<CommentsResponse>(`/api/reports/${reportId}/comments`, { params })
   return response.data
 }
 
@@ -28,8 +28,10 @@ export async function deleteReportComment(commentId: string) {
   return response.data
 }
 
-export async function getSuggestionComments(suggestionId: string) {
-  const response = await api.get<CommentsResponse>(`/api/suggestions/${suggestionId}/comments`)
+export async function getSuggestionComments(suggestionId: string, params: PaginationParams) {
+  const response = await api.get<CommentsResponse>(`/api/suggestions/${suggestionId}/comments`, {
+    params,
+  })
   return response.data
 }
 

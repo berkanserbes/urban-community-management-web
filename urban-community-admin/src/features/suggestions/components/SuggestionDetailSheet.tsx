@@ -69,7 +69,9 @@ export function SuggestionDetailSheet({ suggestionId, onOpenChange }: Props) {
   const suggestion = detailQuery.data
   const transitions = transitionsQuery.data?.allowedNextStatuses ?? []
   const voteSummary = voteSummaryQuery.data
-  const comments = commentsQuery.data ?? []
+  const comments = commentsQuery.data?.pages.flatMap((page) => page.items) ?? []
+  const commentPages = commentsQuery.data?.pages ?? []
+  const commentCount = commentPages[commentPages.length - 1]?.totalCount ?? 0
 
   const isOpen = Boolean(suggestionId)
 
@@ -223,6 +225,10 @@ export function SuggestionDetailSheet({ suggestionId, onOpenChange }: Props) {
             {/* Comments */}
             <CommentSection
               comments={comments}
+              totalCount={commentCount}
+              hasMore={commentsQuery.hasNextPage}
+              isLoadingMore={commentsQuery.isFetchingNextPage}
+              onLoadMore={() => commentsQuery.fetchNextPage()}
               isLoading={commentsQuery.isLoading}
               isError={commentsQuery.isError}
               onCreateComment={handleCreateComment}

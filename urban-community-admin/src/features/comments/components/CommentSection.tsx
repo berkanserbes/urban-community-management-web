@@ -11,6 +11,11 @@ import { useAuthStore } from '@/stores/auth.store'
 
 type CommentSectionProps = {
   comments: CommentDto[]
+  /** Total comment count on the server; the list may hold only the loaded pages. */
+  totalCount: number
+  hasMore: boolean
+  isLoadingMore: boolean
+  onLoadMore: () => void
   isLoading: boolean
   isError: boolean
   currentUserId?: string
@@ -22,6 +27,10 @@ type CommentSectionProps = {
 
 export function CommentSection({
   comments,
+  totalCount,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   isLoading,
   isError,
   currentUserId,
@@ -49,7 +58,7 @@ export function CommentSection({
     <div className="space-y-4">
       <h4 className="text-sm font-semibold flex items-center gap-2">
         <MessageSquare className="size-4" />
-        Yorumlar ({comments.length})
+        Yorumlar ({totalCount})
       </h4>
 
       <div className="flex gap-2">
@@ -113,6 +122,17 @@ export function CommentSection({
               </div>
             </div>
           ))}
+          {hasMore && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? <Loader2 className="size-4 animate-spin" /> : 'Daha fazla yorum yükle'}
+            </Button>
+          )}
         </div>
       )}
     </div>

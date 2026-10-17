@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getReportComments,
   createReportComment,
@@ -7,15 +7,25 @@ import {
   createSuggestionComment,
   deleteSuggestionComment,
 } from '@/features/comments/api/commentsApi'
+import { DEFAULT_PAGE_SIZE } from '@/lib/api/pagination'
 import { unwrapApiResult } from '@/lib/api/result'
+import type { PagedResult } from '@/types/api.types'
+
+// Comments load oldest first; "load more" appends the next page.
+const nextPageParam = (lastPage: PagedResult<unknown>) =>
+  lastPage.hasNextPage ? lastPage.pageIndex + 1 : undefined
 
 export function useReportCommentsQuery(reportId: string | null) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['comments', 'report', reportId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       if (!reportId) throw new Error('Rapor seçilmedi')
-      return unwrapApiResult(await getReportComments(reportId))
+      return unwrapApiResult(
+        await getReportComments(reportId, { pageIndex: pageParam, pageSize: DEFAULT_PAGE_SIZE }),
+      )
     },
+    initialPageParam: 1,
+    getNextPageParam: nextPageParam,
     enabled: Boolean(reportId),
   })
 }
@@ -45,12 +55,16 @@ export function useDeleteReportCommentMutation() {
 }
 
 export function useSuggestionCommentsQuery(suggestionId: string | null) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['comments', 'suggestion', suggestionId],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       if (!suggestionId) throw new Error('Öneri seçilmedi')
-      return unwrapApiResult(await getSuggestionComments(suggestionId))
+      return unwrapApiResult(
+        await getSuggestionComments(suggestionId, { pageIndex: pageParam, pageSize: DEFAULT_PAGE_SIZE }),
+      )
     },
+    initialPageParam: 1,
+    getNextPageParam: nextPageParam,
     enabled: Boolean(suggestionId),
   })
 }
